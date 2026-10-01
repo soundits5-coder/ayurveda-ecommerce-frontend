@@ -14,22 +14,52 @@ const Header = () => {
   const { wishlistCount } = useWishlist();
   const navigate = useNavigate();
 
-  // Prevent background scrolling when mobile menu drawer is open
+  // Robust scroll lock for iOS Safari and mobile Chrome
   useEffect(() => {
     if (isMobileMenuOpen) {
+      const scrollY = window.scrollY || window.pageYOffset;
+      document.body.dataset.scrollY = scrollY.toString();
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
       document.body.style.overflow = 'hidden';
-      document.body.style.touchAction = 'none';
     } else {
-      document.body.style.overflow = 'unset';
-      document.body.style.touchAction = 'auto';
+      const savedScrollY = document.body.dataset.scrollY;
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
+      if (savedScrollY !== undefined && savedScrollY !== '') {
+        window.scrollTo(0, parseInt(savedScrollY || '0', 10));
+        delete document.body.dataset.scrollY;
+      }
     }
+
     return () => {
-      document.body.style.overflow = 'unset';
-      document.body.style.touchAction = 'auto';
+      const savedScrollY = document.body.dataset.scrollY;
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
+      if (savedScrollY !== undefined && savedScrollY !== '') {
+        window.scrollTo(0, parseInt(savedScrollY || '0', 10));
+        delete document.body.dataset.scrollY;
+      }
     };
   }, [isMobileMenuOpen]);
 
-  const toggleMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
+  // Close on Escape key press
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isMobileMenuOpen) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isMobileMenuOpen]);
+
+  const toggleMenu = () => setIsMobileMenuOpen((prev) => !prev);
   const closeMenu = () => setIsMobileMenuOpen(false);
 
   const navLinks = [
@@ -166,9 +196,11 @@ const Header = () => {
             
             {/* Mobile Menu Toggle */}
             <button 
-              className="lg:hidden text-earth-heading hover:text-ayurveda p-1"
+              className="lg:hidden text-earth-heading hover:text-ayurveda p-1 focus:outline-none"
               onClick={toggleMenu}
-              aria-label="Toggle menu"
+              aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={isMobileMenuOpen}
+              aria-controls="mobile-drawer-menu"
             >
               {isMobileMenuOpen ? <LuX className="w-6 h-6" /> : <LuMenu className="w-6 h-6" />}
             </button>
@@ -178,47 +210,54 @@ const Header = () => {
 
       {/* Mobile Drawer Backdrop */}
       <div 
-        className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity duration-300 lg:hidden ${
+        className={`fixed inset-0 bg-black/60 z-40 transition-opacity duration-300 lg:hidden ${
           isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
         onClick={closeMenu}
-        aria-hidden={!isMobileMenuOpen}
+        aria-hidden="true"
       ></div>
       
-      {/* Mobile Drawer Menu */}
+      {/* Mobile Drawer Menu Panel */}
       <div 
-        className={`fixed top-0 right-0 h-full w-72 max-w-[85vw] bg-white border-l border-[#E6DEC8] shadow-2xl z-50 transform transition-transform duration-300 ease-in-out lg:hidden flex flex-col ${
+        id="mobile-drawer-menu"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Navigation Menu"
+        aria-hidden={!isMobileMenuOpen}
+        className={`fixed top-0 right-0 h-full w-72 max-w-[85vw] border-l border-[#E6DEC8] shadow-2xl z-50 transform transition-transform duration-300 ease-in-out lg:hidden flex flex-col overflow-y-auto overscroll-contain ${
           isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
-        style={{ backgroundColor: '#FAF6F0' }}
+        style={{ backgroundColor: '#FAF6F0', overscrollBehavior: 'contain' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-6 flex flex-col h-full bg-[#FAF6F0]">
-          <div className="flex justify-between items-center mb-8 border-b border-earth-border pb-4">
-            <span className="font-heading font-bold text-xl text-earth-heading">AyurVeda</span>
-            <button 
-              onClick={closeMenu} 
-              className="text-earth-muted hover:text-earth-heading p-2 rounded-lg hover:bg-black/5 active:scale-95 transition-all"
-              aria-label="Close menu"
-            >
-              <LuX className="w-6 h-6 text-earth-heading" />
-            </button>
-          </div>
-          
-          <nav className="flex flex-col space-y-4">
-            {navLinks.map((link) => (
-              <NavLink
-                key={link.name}
-                to={link.path}
-                onClick={closeMenu}
-                className={({ isActive }) => 
-                  `text-base font-medium transition-colors hover:text-ayurveda ${isActive ? 'text-ayurveda font-semibold' : 'text-earth-heading'}`
-                }
+        <div className="p-6 flex flex-col min-h-full justify-between" style={{ backgroundColor: '#FAF6F0' }}>
+          <div>
+            <div className="flex justify-between items-center mb-8 border-b border-earth-border pb-4">
+              <span className="font-heading font-bold text-xl text-earth-heading">AyurVeda</span>
+              <button 
+                onClick={closeMenu} 
+                className="text-earth-muted hover:text-earth-heading p-2 rounded-lg hover:bg-black/5 active:scale-95 transition-all"
+                aria-label="Close menu"
               >
-                {link.name}
-              </NavLink>
-            ))}
-          </nav>
+                <LuX className="w-6 h-6 text-earth-heading" />
+              </button>
+            </div>
+            
+            <nav className="flex flex-col space-y-4">
+              {navLinks.map((link) => (
+                <NavLink
+                  key={link.name}
+                  to={link.path}
+                  onClick={closeMenu}
+                  className={({ isActive }) => 
+                    `text-base font-medium transition-colors hover:text-ayurveda ${isActive ? 'text-ayurveda font-semibold' : 'text-earth-heading'}`
+                  }
+                >
+                  {link.name}
+                </NavLink>
+              ))}
+            </nav>
+          </div>
           
           <div className="mt-auto border-t border-earth-border pt-6 flex flex-col space-y-3">
             {isAuthenticated ? (
