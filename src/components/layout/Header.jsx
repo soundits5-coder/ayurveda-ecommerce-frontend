@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { LuSearch, LuUser, LuShoppingBag, LuMenu, LuX, LuHeart } from 'react-icons/lu';
 import { useAuth } from '../../context/AuthContext';
@@ -13,6 +13,21 @@ const Header = () => {
   const { cartCount } = useCart();
   const { wishlistCount } = useWishlist();
   const navigate = useNavigate();
+
+  // Prevent background scrolling when mobile menu drawer is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+    } else {
+      document.body.style.overflow = 'unset';
+      document.body.style.touchAction = 'auto';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+      document.body.style.touchAction = 'auto';
+    };
+  }, [isMobileMenuOpen]);
 
   const toggleMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
   const closeMenu = () => setIsMobileMenuOpen(false);
@@ -161,18 +176,32 @@ const Header = () => {
         </div>
       </div>
 
-      {/* Mobile Drawer */}
+      {/* Mobile Drawer Backdrop */}
       <div 
-        className={`fixed inset-0 bg-black/40 z-40 transition-opacity lg:hidden ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity duration-300 lg:hidden ${
+          isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
         onClick={closeMenu}
+        aria-hidden={!isMobileMenuOpen}
       ></div>
       
-      <div className={`fixed top-0 right-0 h-full w-72 bg-[#FAF6F0] border-l border-earth-border shadow-2xl z-50 transform transition-transform duration-300 ease-in-out lg:hidden ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-        <div className="p-6 flex flex-col h-full">
+      {/* Mobile Drawer Menu */}
+      <div 
+        className={`fixed top-0 right-0 h-full w-72 max-w-[85vw] bg-white border-l border-[#E6DEC8] shadow-2xl z-50 transform transition-transform duration-300 ease-in-out lg:hidden flex flex-col ${
+          isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+        style={{ backgroundColor: '#FAF6F0' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="p-6 flex flex-col h-full bg-[#FAF6F0]">
           <div className="flex justify-between items-center mb-8 border-b border-earth-border pb-4">
             <span className="font-heading font-bold text-xl text-earth-heading">AyurVeda</span>
-            <button onClick={closeMenu} className="text-earth-muted hover:text-earth-heading p-1">
-              <LuX className="w-5 h-5" />
+            <button 
+              onClick={closeMenu} 
+              className="text-earth-muted hover:text-earth-heading p-2 rounded-lg hover:bg-black/5 active:scale-95 transition-all"
+              aria-label="Close menu"
+            >
+              <LuX className="w-6 h-6 text-earth-heading" />
             </button>
           </div>
           
