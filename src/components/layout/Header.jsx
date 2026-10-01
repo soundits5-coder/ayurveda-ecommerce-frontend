@@ -258,47 +258,6 @@ const Header = () => {
               ))}
             </nav>
           </div>
-          
-          <div className="mt-auto border-t border-earth-border pt-6 flex flex-col space-y-3">
-            {isAuthenticated ? (
-              <>
-                <button 
-                  onClick={() => { closeMenu(); navigate('/account'); }}
-                  className="flex items-center gap-3 text-earth-heading hover:text-ayurveda text-sm font-medium py-2"
-                >
-                  <LuUser className="w-5 h-5 text-ayurveda" />
-                  My Account ({user?.name || 'User'})
-                </button>
-                <button 
-                  onClick={() => { closeMenu(); logout(); }}
-                  className="text-left text-xs text-red-600 hover:text-red-700 py-1"
-                >
-                  Sign Out
-                </button>
-              </>
-            ) : (
-              <button 
-                onClick={() => { closeMenu(); navigate('/login'); }}
-                className="flex items-center gap-3 text-earth-heading hover:text-ayurveda text-sm font-medium py-2"
-              >
-                <LuUser className="w-5 h-5" />
-                Sign In / Register
-              </button>
-            )}
-            <Link 
-              to="/cart"
-              onClick={closeMenu}
-              className="flex items-center justify-between text-earth-heading hover:text-ayurveda text-sm font-medium py-2"
-            >
-              <span className="flex items-center gap-3">
-                <LuShoppingBag className="w-5 h-5" />
-                Cart
-              </span>
-              <span className="bg-ayurveda text-white text-xs px-2 py-0.5 rounded-full font-bold">
-                {cartCount}
-              </span>
-            </Link>
-          </div>
         </div>
       </div>
     </header>
